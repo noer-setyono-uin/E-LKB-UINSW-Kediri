@@ -8,6 +8,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>.fab { position: fixed; bottom: 2rem; right: 2rem; z-index: 50; }</style>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800">
 
@@ -201,16 +202,64 @@
         }
 
         // VOICE API
-        const btnMic = document.getElementById('btnMic');
-        let recog;
-        if ('webkitSpeechRecognition' in window) {
-            recog = new webkitSpeechRecognition();
-            recog.lang = 'id-ID';
-            recog.onstart = () => { document.getElementById('micText').innerText = "Mendengarkan..."; btnMic.classList.replace('bg-emerald-100', 'bg-red-100'); };
-            recog.onresult = (e) => { if(e.results[0][0].transcript) simpan('voi', e.results[0][0].transcript); };
-            recog.onend = () => { document.getElementById('micText').innerText = "Selesai merekam"; btnMic.classList.replace('bg-red-100', 'bg-emerald-100'); };
-            btnMic.onclick = () => recog.start();
-        }
+     const btnMic = document.getElementById('btnMic');
+     let recog;
+     let isRecording = false; // Penanda status perekaman
+
+     if ('webkitSpeechRecognition' in window) {
+         recog = new webkitSpeechRecognition();
+         recog.lang = 'id-ID';
+         recog.continuous = false; // Hanya merekam satu sesi bicara
+         recog.interimResults = false; // Langsung hasil akhir
+
+         recog.onstart = () => { 
+             isRecording = true;
+             document.getElementById('micText').innerText = "Mendengarkan... (Ketuk lagi untuk batal)"; 
+             btnMic.classList.replace('bg-emerald-100', 'bg-red-100'); 
+         };
+
+         recog.onresult = (e) => { 
+             if (e.results[0][0].transcript) {
+                 simpan('voi', e.results[0][0].transcript); 
+             }
+         };
+
+         // onend akan dipanggil jika selesai merekam ATAU jika dihentikan manual (abort)
+         recog.onend = () => { 
+             isRecording = false;
+             document.getElementById('micText').innerText = "Ketuk untuk merekam."; 
+             btnMic.classList.replace('bg-red-100', 'bg-emerald-100'); 
+         };
+
+         recog.onerror = (e) => {
+             isRecording = false;
+             // Cegah pesan error tampil jika pengguna menekan tombol saat sedang mendengarkan (abort-error)
+             if (e.error !== 'aborted') {
+                 console.error("Mic error:", e.error);
+                 document.getElementById('micText').innerText = "Gagal merekam suara.";
+             }
+             btnMic.classList.replace('bg-red-100', 'bg-emerald-100');
+         };
+
+         // Logika pencegahan InvalidStateError
+         btnMic.onclick = () => {
+             if (isRecording) {
+                 // Jika sedang merekam, hentikan rekaman (batalkan)
+                 recog.abort(); 
+                 isRecording = false;
+             } else {
+                 // Jika tidak merekam, mulai merekam
+                 try {
+                     recog.start();
+                 } catch (error) {
+                     console.error("Gagal memulai mic:", error);
+                 }
+             }
+         };
+     } else {
+         // Sembunyikan tab Voice jika browser tidak mendukung Web Speech API
+         document.getElementById('tabVoi').style.display = 'none';
+     }
 
         // CETAK PDF
         async function cetakLaporan() {
