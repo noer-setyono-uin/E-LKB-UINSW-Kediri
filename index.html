@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem LKB UIN Kediri</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>.fab { position: fixed; bottom: 2rem; right: 2rem; z-index: 50; }</style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800">
+
+    <!-- VIEW: LOGIN -->
+    <div id="view-login" class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
+            <div class="text-center mb-6">
+                <h1 class="text-2xl font-bold text-emerald-700">E-LKB Akademik</h1>
+                <p class="text-sm text-gray-500">UIN Syekh Wasil Kediri</p>
+            </div>
+            <form id="formLogin" class="space-y-4">
+                <input type="email" id="logEmail" placeholder="Email (@uinkediri.ac.id)" required class="w-full border rounded-lg p-2.5">
+                <input type="password" id="logPass" placeholder="Password" required class="w-full border rounded-lg p-2.5">
+                <button type="submit" class="w-full bg-emerald-600 text-white font-bold py-2.5 rounded-lg hover:bg-emerald-700">Masuk</button>
+            </form>
+            <p class="text-center mt-4 text-sm">Belum terdaftar? <a href="#" onclick="toggleView('view-register')" class="text-emerald-600 font-bold">Daftar Akun</a></p>
+        </div>
+    </div>
+
+    <!-- VIEW: REGISTER -->
+    <div id="view-register" class="min-h-screen flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
+            <h1 class="text-xl font-bold text-center text-emerald-700 mb-6">Registrasi LKB</h1>
+            <form id="formRegister" class="space-y-3">
+                <input type="email" id="regEmail" placeholder="Email Wajib @uinkediri.ac.id" required class="w-full border rounded-lg p-2">
+                <input type="password" id="regPass" placeholder="Buat Password" required class="w-full border rounded-lg p-2">
+                <input type="text" id="regNip" placeholder="NIP Pegawai" required class="w-full border rounded-lg p-2">
+                <input type="text" id="regNama" placeholder="Nama Lengkap & Gelar" required class="w-full border rounded-lg p-2">
+                <input type="text" id="regAtasan" placeholder="Nama Atasan (Misal: Pak Khamim)" required class="w-full border rounded-lg p-2">
+                <input type="text" id="regNipAtasan" placeholder="NIP Atasan" required class="w-full border rounded-lg p-2">
+                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2.5 rounded-lg">Simpan Pendaftaran</button>
+            </form>
+            <p class="text-center mt-4 text-sm"><a href="#" onclick="toggleView('view-login')" class="text-emerald-600 font-bold">Batal (Kembali)</a></p>
+        </div>
+    </div>
+
+    <!-- VIEW: DASHBOARD APP -->
+    <div id="view-app" class="hidden">
+        <nav class="bg-emerald-700 text-white p-4 flex justify-between">
+            <div class="font-bold"><i class="fas fa-book mr-2"></i> LKB Bulanan</div>
+            <div>
+                <span class="mr-4 text-sm hidden sm:inline" id="userDisplayName"></span>
+                <button onclick="logout()" title="Keluar"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </nav>
+
+        <div class="p-4 max-w-6xl mx-auto mt-4">
+            <div class="flex justify-between items-center mb-4 bg-white p-4 rounded-lg shadow">
+                <div class="flex items-center gap-2">
+                    <label class="font-bold">Bulan:</label>
+                    <input type="month" id="filterBulan" onchange="loadData()" class="border p-2 rounded">
+                </div>
+                <button onclick="cetakLaporan()" class="bg-gray-800 text-white px-4 py-2 rounded shadow hover:bg-gray-700"><i class="fas fa-print mr-2"></i>Cetak PDF</button>
+            </div>
+            
+            <div class="overflow-x-auto bg-white rounded-lg shadow border">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-emerald-50 text-emerald-800">
+                        <tr><th class="p-3 border">Tanggal</th><th class="p-3 border">Deskripsi</th><th class="p-3 border">Judul</th><th class="p-3 border">Jml/Satuan</th></tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <button onclick="bukaModal()" class="fab bg-emerald-600 text-white w-14 h-14 rounded-full shadow-lg text-2xl"><i class="fas fa-plus"></i></button>
+    </div>
+
+    <!-- MODAL INPUT LKB -->
+    <div id="modal-input" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold">Tambah Laporan Harian</h3>
+                <button onclick="tutupModal()" class="text-red-500"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <input type="date" id="inTgl" class="w-full border rounded p-2 mb-4">
+            
+            <!-- Tab Mode -->
+            <div class="flex gap-2 mb-4 bg-gray-100 p-1 rounded">
+                <button id="tabMan" onclick="switchTab('man')" class="w-1/2 py-1 bg-white shadow rounded text-sm font-bold">Ketik Manual</button>
+                <button id="tabVoi" onclick="switchTab('voi')" class="w-1/2 py-1 text-sm text-gray-500 font-bold">Suara (AI)</button>
+            </div>
+
+            <!-- Area Manual -->
+            <div id="areaMan" class="space-y-2">
+                <textarea id="manDesc" rows="3" placeholder="Kegiatan..." class="w-full border rounded p-2 text-sm"></textarea>
+                <div class="flex gap-2">
+                    <input type="text" id="manJudul" placeholder="Judul" class="w-1/2 border rounded p-2 text-sm">
+                    <input type="number" id="manJml" placeholder="Jml" class="w-1/4 border rounded p-2 text-sm">
+                    <input type="text" id="manSat" placeholder="Satuan" class="w-1/4 border rounded p-2 text-sm">
+                </div>
+                <button onclick="simpan('man')" class="w-full bg-blue-600 text-white font-bold py-2 rounded mt-2">Simpan Manual</button>
+            </div>
+
+            <!-- Area Suara -->
+            <div id="areaVoi" class="hidden text-center py-4">
+                <button id="btnMic" class="w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 text-3xl shadow">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <p id="micText" class="text-sm mt-3 text-gray-500">Ketuk untuk merekam.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIKA JAVASCRIPT -->
+    <script>
+        const API_URL = "URL_GAS_ANDA_DISINI"; 
+        let currentUser = null;
+
+        window.onload = () => {
+            const user = localStorage.getItem('lkb_user');
+            if(user) { currentUser = JSON.parse(user); showApp(); }
+        };
+
+        function toggleView(id) {
+            document.querySelectorAll('div[id^="view-"]').forEach(d => d.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        async function fetchAPI(payload) {
+            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+            const data = await res.json();
+            if(data.error) throw new Error(data.error);
+            return data;
+        }
+
+        // AUTH
+        document.getElementById('formRegister').onsubmit = async (e) => {
+            e.preventDefault();
+            const payload = { action: 'register', email: e.target.regEmail.value, password: e.target.regPass.value, nip: e.target.regNip.value, nama: e.target.regNama.value, atasan: e.target.regAtasan.value, nipAtasan: e.target.regNipAtasan.value };
+            if(!payload.email.endsWith('@uinkediri.ac.id')) return Swal.fire('Error', 'Gunakan email UIN Kediri', 'error');
+            Swal.fire({title: 'Memproses...', didOpen: ()=>Swal.showLoading()});
+            try { await fetchAPI(payload); Swal.fire('Berhasil', 'Silakan Login', 'success'); toggleView('view-login'); } 
+            catch (err) { Swal.fire('Gagal', err.message, 'error'); }
+        };
+
+        document.getElementById('formLogin').onsubmit = async (e) => {
+            e.preventDefault();
+            Swal.fire({title: 'Login...', didOpen: ()=>Swal.showLoading()});
+            try {
+                const data = await fetchAPI({ action: 'login', email: e.target.logEmail.value, password: e.target.logPass.value });
+                localStorage.setItem('lkb_user', JSON.stringify(data)); currentUser = data;
+                Swal.close(); showApp();
+            } catch (err) { Swal.fire('Gagal', err.message, 'error'); }
+        };
+
+        function logout() { localStorage.removeItem('lkb_user'); location.reload(); }
+
+        // DASHBOARD
+        function showApp() {
+            toggleView('view-app');
+            document.getElementById('userDisplayName').innerText = `Halo, ${currentUser.nama}`;
+            
+            const now = new Date();
+            document.getElementById('filterBulan').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+            document.getElementById('inTgl').valueAsDate = now;
+            loadData();
+        }
+
+        async function loadData() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center">Memuat...</td></tr>';
+            try {
+                const data = await fetchAPI({ action: 'get_laporan', nip: currentUser.nip, bulan: document.getElementById('filterBulan').value });
+                tbody.innerHTML = data.length ? data.map(r => `<tr class="border-b hover:bg-gray-50"><td class="p-3 border whitespace-nowrap">${r.tanggal}</td><td class="p-3 border">${r.deskripsi}</td><td class="p-3 border">${r.judul}</td><td class="p-3 border">${r.jml} ${r.satuan}</td></tr>`).join('') 
+                : '<tr><td colspan="4" class="p-4 text-center">Kosong</td></tr>';
+            } catch (e) { tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-red-500">Error memuat data</td></tr>'; }
+        }
+
+        // MODAL & SIMPAN
+        function bukaModal() { document.getElementById('modal-input').classList.remove('hidden'); }
+        function tutupModal() { document.getElementById('modal-input').classList.add('hidden'); }
+        function switchTab(mode) {
+            document.getElementById('areaMan').classList.toggle('hidden', mode === 'voi');
+            document.getElementById('areaVoi').classList.toggle('hidden', mode === 'man');
+            document.getElementById('tabMan').className = mode==='man' ? 'w-1/2 py-1 bg-white shadow rounded text-sm font-bold' : 'w-1/2 py-1 text-sm text-gray-500 font-bold';
+            document.getElementById('tabVoi').className = mode==='voi' ? 'w-1/2 py-1 bg-white shadow rounded text-sm font-bold' : 'w-1/2 py-1 text-sm text-gray-500 font-bold';
+        }
+
+        async function simpan(mode, textVoice = "") {
+            tutupModal();
+            Swal.fire({title: mode==='voi' ? 'AI Memproses...' : 'Menyimpan...', allowOutsideClick: false, didOpen: ()=>Swal.showLoading()});
+            
+            let payloadText = mode === 'man' ? JSON.stringify({ deskripsi: document.getElementById('manDesc').value, judul: document.getElementById('manJudul').value, jml: document.getElementById('manJml').value || 1, satuan: document.getElementById('manSat').value }) : textVoice;
+            
+            try {
+                await fetchAPI({ action: 'simpan_laporan', nip: currentUser.nip, tanggal: document.getElementById('inTgl').value, teks: payloadText, isVoice: mode === 'voi' });
+                Swal.fire('Sukses', 'Tersimpan', 'success'); loadData();
+            } catch(e) { Swal.fire('Error', e.message, 'error'); }
+        }
+
+        // VOICE API
+        const btnMic = document.getElementById('btnMic');
+        let recog;
+        if ('webkitSpeechRecognition' in window) {
+            recog = new webkitSpeechRecognition();
+            recog.lang = 'id-ID';
+            recog.onstart = () => { document.getElementById('micText').innerText = "Mendengarkan..."; btnMic.classList.replace('bg-emerald-100', 'bg-red-100'); };
+            recog.onresult = (e) => { if(e.results[0][0].transcript) simpan('voi', e.results[0][0].transcript); };
+            recog.onend = () => { document.getElementById('micText').innerText = "Selesai merekam"; btnMic.classList.replace('bg-red-100', 'bg-emerald-100'); };
+            btnMic.onclick = () => recog.start();
+        }
+
+        // CETAK PDF
+        async function cetakLaporan() {
+            Swal.fire({title: 'Menyiapkan PDF...', didOpen: ()=>Swal.showLoading()});
+            try {
+                const res = await fetchAPI({ action: 'cetak_laporan', nip: currentUser.nip, nama: currentUser.nama, atasan: currentUser.atasan, bulan: document.getElementById('filterBulan').value });
+                Swal.close();
+                const printWin = window.open('', '_blank');
+                printWin.document.write(res.html); printWin.document.close();
+                setTimeout(() => printWin.print(), 800);
+            } catch(e) { Swal.fire('Gagal Cetak', e.message, 'error'); }
+        }
+    </script>
+</body>
+</html>
