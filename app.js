@@ -2,7 +2,7 @@
 //  E-LKB — logika client
 //  Ganti API_URL di bawah dengan URL Web App Apps Script Anda (berakhiran /exec).
 // =====================================================================
-const API_URL = 'GANTI_DENGAN_URL_WEB_APP_ANDA/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyaDEVaDubJoFvqR4URUptcd11ipAN1dmmr7ObXO6XOg1sstbrToX5AppL9VA_m-LQ6/exec';
 
 const TOKEN_KEY = 'lkb_token';
 const HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
