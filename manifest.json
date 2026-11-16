@@ -1,32 +1,17 @@
 {
-  "name": "LKB - Laporan Kinerja Bulanan",
-  "short_name": "LKB",
+  "name": "E-LKB - Laporan Kinerja Bulanan",
+  "short_name": "E-LKB",
   "description": "Catat kegiatan harian dengan suara/teks, susun Laporan Kinerja Bulanan otomatis.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f5f6f8",
-  "theme_color": "#1a73e8",
+  "background_color": "#f8fafc",
+  "theme_color": "#059669",
   "lang": "id",
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-maskable-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
