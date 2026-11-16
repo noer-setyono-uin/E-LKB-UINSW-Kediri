@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>E-LKB Harian</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Roboto, sans-serif; background: #f5f6f8; margin: 0; color: #202124; }
+    .container { max-width: 520px; margin: 0 auto; padding: 16px; }
+    .card { background: #fff; border-radius: 12px; padding: 18px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    h1 { margin: 0; font-size: 22px; color: #059669; }
+    h3 { margin: 0 0 10px; font-size: 16px; color: #374151; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #4b5563; margin: 12px 0 4px; }
+    input, textarea, select { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; font-family: inherit; }
+    textarea { resize: vertical; }
+
+    .btn { border: none; border-radius: 8px; padding: 11px 16px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 12px; transition: 0.2s; }
+    .btn:disabled { opacity: 0.6; cursor: default; }
+    .btn-primary { background: #059669; color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #047857; }
+    .btn-outline { background: #fff; border: 1px solid #d1d5db; color: #374151; }
+    .btn-mic { background: #ef4444; color: #fff; }
+    .btn-mic.recording { background: #b91c1c; animation: pulse 1.5s infinite; }
+    .btn-block { width: 100%; }
+    .btn-small { padding: 6px 10px; font-size: 12px; margin-top: 0; }
+
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.7); } 70% { box-shadow: 0 0 0 10px rgba(239,68,68,0); } 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); } }
+
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .muted { color: #6b7280; font-size: 12px; }
+    .mic-row { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
+    .card-title-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px; }
+    .status { margin-top: 8px; font-size: 13px; color: #059669; font-weight: 500;}
+    .status.error { color: #dc2626; }
+
+    .log-item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 8px; font-size: 13px; background: #f8fafc;}
+    .log-item .tag { display: inline-block; background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-bottom: 6px; font-weight: bold;}
+    .empty-state { color: #9ca3af; font-size: 13px; text-align: center; padding: 20px 0; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div>
+        <h1>E-LKB Harian</h1>
+        <div class="muted" id="profileInfo">UIN Syekh Wasil Kediri</div>
+      </div>
+      <button id="btnSettings" class="btn btn-outline btn-small">⚙ API</button>
+    </div>
+
+    <!-- PENGATURAN KONEKSI -->
+    <div class="card hidden" id="settingsCard">
+      <h3>Koneksi Backend (GAS)</h3>
+      <label>URL Web App Apps Script</label>
+      <input type="url" id="apiUrl" placeholder="https://script.google.com/macros/s/.../exec" />
+      <label>Token Keamanan</label>
+      <input type="password" id="apiToken" placeholder="Sesuai API_TOKEN di Code.gs" />
+      <button id="btnSaveSettings" class="btn btn-primary btn-block">Hubungkan</button>
+      <div id="settingsStatus" class="status"></div>
+    </div>
+
+    <!-- INPUT KEGIATAN HARIAN -->
+    <div class="card">
+      <div class="card-title-row">
+        <h3>Pilih Tanggal Kegiatan</h3>
+      </div>
+      <input type="date" id="tanggalInput" />
+
+      <label>Ceritakan Kegiatan (Audio/Teks)</label>
+      <textarea id="narasiInput" rows="4" placeholder="Ketuk mikrofon atau ketik manual kegiatan Anda..."></textarea>
+
+      <div class="mic-row">
+        <button id="btnMic" class="btn btn-mic">🎤 Rekam Suara</button>
+        <span id="micStatus" class="muted"></span>
+      </div>
+
+      <button id="btnSave" class="btn btn-primary btn-block">✨ Analisis AI & Simpan ke Tabel</button>
+      <div id="saveStatus" class="status"></div>
+    </div>
+
+    <!-- RIWAYAT TANGGAL TERPILIH -->
+    <div class="card">
+      <div class="card-title-row">
+        <h3 id="labelRiwayat">Riwayat Tanggal Ini</h3>
+        <button id="btnRefreshLogs" class="btn btn-outline btn-small">↻ Muat</button>
+      </div>
+      <div id="logList"></div>
+    </div>
+
+    <!-- CETAK PDF -->
+    <div class="card">
+      <h3>Cetak Laporan Bulanan</h3>
+      <input type="month" id="monthInput" />
+      <button id="btnGenerate" class="btn btn-primary btn-block">🖨 Buat Laporan PDF</button>
+      <div id="reportStatus" class="status"></div>
+    </div>
+
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    let recognition = null;
+    let isRecording = false;
+    let transcriptBase = '';
+
+    function getSettings() {
+      return { url: localStorage.getItem('lkb_url') || '', token: localStorage.getItem('lkb_token') || '' };
+    }
+
+    async function api(action, payload = {}) {
+      const { url, token } = getSettings();
+      if (!url || !token) throw new Error('Harap isi pengaturan koneksi API.');
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ token, action, ...payload })
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || 'Server Error.');
+      return json.data;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const today = new Date();
+      const ds = today.toISOString().slice(0, 10);
+      $('tanggalInput').value = ds;
+      $('monthInput').value = ds.slice(0, 7);
+
+      $('btnSettings').onclick = () => $('settingsCard').classList.toggle('hidden');
+      $('btnSaveSettings').onclick = saveSettings;
+      $('btnMic').onclick = toggleMic;
+      $('btnSave').onclick = saveActivities;
+      $('btnRefreshLogs').onclick = loadLogs;
+      $('tanggalInput').onchange = () => { $('labelRiwayat').innerText = `Riwayat: ${$('tanggalInput').value}`; loadLogs(); };
+      $('btnGenerate').onclick = generateReport;
+      $('narasiInput').oninput = e => { transcriptBase = e.target.value; };
+
+      const s = getSettings();
+      $('apiUrl').value = s.url;
+      $('apiToken').value = s.token;
+      
+      setupSpeech();
+
+      if (s.url && s.token) {
+        api('getProfile').then(p => $('profileInfo').textContent = `${p.nama} (${p.nip})`).catch(e=>{});
+        loadLogs();
+      } else {
+        $('settingsCard').classList.remove('hidden');
+      }
+    });
+
+    function saveSettings() {
+      localStorage.setItem('lkb_url', $('apiUrl').value.trim());
+      localStorage.setItem('lkb_token', $('apiToken').value.trim());
+      $('settingsStatus').textContent = 'Tersimpan. Coba refresh browser.';
+    }
+
+    // --- VOICE TO TEXT ---
+    function setupSpeech() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) { $('btnMic').disabled = true; $('micStatus').textContent = 'Browser tdk dukung.'; return; }
+      
+      recognition = new SR();
+      recognition.lang = 'id-ID';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onresult = e => {
+        let interim = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          if (e.results[i].isFinal) transcriptBase += (transcriptBase ? ' ' : '') + e.results[i][0].transcript.trim();
+          else interim += e.results[i][0].transcript;
+        }
+        $('narasiInput').value = transcriptBase + (interim ? ' ' + interim : '');
+      };
+      recognition.onerror = e => { $('micStatus').textContent = 'Mic Error: ' + e.error; stopMic(); };
+      recognition.onend = () => { if (isRecording) recognition.start(); };
+    }
+
+    function toggleMic() {
+      if (!recognition) return;
+      if (isRecording) return stopMic();
+      transcriptBase = $('narasiInput').value;
+      isRecording = true; recognition.start();
+      $('btnMic').classList.add('recording'); $('btnMic').textContent = '⏹ Stop';
+      $('micStatus').textContent = 'Mendengarkan...';
+    }
+
+    function stopMic() {
+      isRecording = false; if (recognition) recognition.stop();
+      $('btnMic').classList.remove('recording'); $('btnMic').textContent = '🎤 Rekam Suara';
+      $('micStatus').textContent = '';
+    }
+
+    // --- CRUD DATA ---
+    async function loadLogs() {
+      const tg = $('tanggalInput').value;
+      $('logList').innerHTML = '<div class="empty-state">Memuat tabel...</div>';
+      try {
+        const logs = await api('getLogs', { tanggal: tg });
+        if (!logs.length) { $('logList').innerHTML = '<div class="empty-state">Kosong di tanggal ini.</div>'; return; }
+        
+        $('logList').innerHTML = logs.map(l => `
+          <div class="log-item">
+            <span class="tag">${l.judulLaporan}</span>
+            <div style="font-weight:600; margin-bottom:4px;">${l.deskripsi}</div>
+            <div class="muted">Volume: ${l.jml} ${l.satuan}</div>
+          </div>
+        `).join('');
+      } catch (err) { $('logList').innerHTML = '<div class="empty-state error">' + err.message + '</div>'; }
+    }
+
+    async function saveActivities() {
+      const tanggal = $('tanggalInput').value;
+      const narasi = $('narasiInput').value.trim();
+      if (!tanggal || !narasi) return alert("Lengkapi tanggal dan narasi!");
+      if (isRecording) stopMic();
+
+      $('btnSave').disabled = true; $('btnSave').textContent = 'AI Sedang Merangkum...';
+      $('saveStatus').textContent = '';
+
+      try {
+        await api('saveActivities', { tanggal, mode: 'ai', narasi });
+        $('saveStatus').className = 'status'; $('saveStatus').textContent = 'Berhasil dicatat ke tabel!';
+        $('narasiInput').value = ''; transcriptBase = '';
+        loadLogs();
+      } catch (err) {
+        $('saveStatus').className = 'status error'; $('saveStatus').textContent = err.message;
+      } finally {
+        $('btnSave').disabled = false; $('btnSave').textContent = '✨ Analisis AI & Simpan ke Tabel';
+      }
+    }
+
+    // --- CETAK LAPORAN HTML ---
+    async function generateReport() {
+      const month = $('monthInput').value;
+      $('btnGenerate').disabled = true; $('btnGenerate').textContent = 'Menyusun...';
+      $('reportStatus').textContent = 'Meminta data format PDF...';
+
+      try {
+        const res = await api('generateReport', { month });
+        const printWin = window.open('', '_blank');
+        printWin.document.write(res.html); printWin.document.close();
+        setTimeout(() => { printWin.print(); }, 800);
+        $('reportStatus').textContent = 'Selesai dirender.';
+      } catch (err) {
+        $('reportStatus').className = 'status error'; $('reportStatus').textContent = err.message;
+      } finally {
+        $('btnGenerate').disabled = false; $('btnGenerate').textContent = '🖨 Buat Laporan PDF';
+      }
+    }
+  </script>
+</body>
+</html>
