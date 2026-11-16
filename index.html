@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>E-LKB - Laporan Kinerja Bulanan</title>
+  <meta name="theme-color" content="#1a73e8">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <style>
+    :root {
+      --primary: #1a73e8; --primary-dark: #1558b0; --primary-soft: #e8f0fe;
+      --bg: #f4f6fa; --card: #fff; --text: #1f2937; --muted: #6b7280; --border: #e5e7eb;
+      --danger: #c5221f; --ok: #188038; --ok-soft: #e6f4ea;
+      --radius: 14px; --nav-h: 64px;
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text); line-height: 1.45;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+    }
+    button { font-family: inherit; }
+    .hidden { display: none !important; }
+
+    /* ---------- Komponen ---------- */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
+    h1, h2, h3 { margin: 0; }
+    h2 { font-size: 20px; } h3 { font-size: 16px; }
+    .page-title { margin-bottom: 4px; }
+    .page-sub { color: var(--muted); font-size: 14px; margin: 0 0 16px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin: 14px 0 6px; }
+    label:first-child { margin-top: 0; }
+    input, textarea, select {
+      width: 100%; padding: 11px 12px; border: 1px solid #d1d5db; border-radius: 10px;
+      font-size: 16px; font-family: inherit; background: #fff; color: var(--text);
+    }
+    input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary-soft); border-color: var(--primary); }
+    textarea { resize: vertical; min-height: 130px; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      min-height: 44px; padding: 10px 18px; border: 1px solid transparent; border-radius: 10px;
+      font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none; transition: background .15s;
+    }
+    .btn:disabled { opacity: .6; cursor: default; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-dark); }
+    .btn-outline { background: #fff; border-color: #d1d5db; color: var(--text); }
+    .btn-outline:hover:not(:disabled) { background: #f9fafb; }
+    .btn-danger { background: #fff; border-color: #f1b8b4; color: var(--danger); }
+    .btn-mic { background: #fff; border-color: #f1b8b4; color: var(--danger); }
+    .btn-mic.recording { background: var(--danger); color: #fff; border-color: var(--danger); animation: pulse 1.4s infinite; }
+    .btn-block { width: 100%; }
+    .btn-sm { min-height: 36px; padding: 6px 12px; font-size: 13px; }
+    @keyframes pulse { 50% { opacity: .75; } }
+    .muted { color: var(--muted); font-size: 13px; }
+    .status { margin-top: 10px; font-size: 14px; color: var(--muted); }
+    .status.error { color: var(--danger); }
+    .status.ok { color: var(--ok); }
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .row-between { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr; gap: 0 14px; }
+    @media (min-width: 640px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
+    .grid-2 > div > label { margin-top: 14px; }
+    .grid-2:first-child { margin-top: -14px; }
+    .notice { background: #fff8e1; border: 1px solid #f5d27a; border-radius: 12px; padding: 14px; margin-bottom: 16px; font-size: 14px; color: #6b4f00; }
+    details summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--primary); }
+    details ol { margin: 10px 0 0; padding-left: 20px; font-size: 14px; }
+    details li { margin-bottom: 4px; }
+    .section-sep { border: 0; border-top: 1px solid var(--border); margin: 22px 0 16px; }
+
+    /* ---------- Masuk / Daftar ---------- */
+    .auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .auth-card { width: 100%; max-width: 460px; padding: 26px 22px; }
+    .logo {
+      width: 60px; height: 60px; margin: 0 auto 12px; background: var(--primary); color: #fff;
+      border-radius: 16px; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 18px; letter-spacing: .5px;
+    }
+    .auth-head { text-align: center; margin-bottom: 16px; }
+    .auth-head h1 { font-size: 21px; }
+    .tabs { display: flex; background: var(--bg); border-radius: 10px; padding: 4px; margin-bottom: 16px; }
+    .tab { flex: 1; border: none; background: none; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; }
+    .tab.active { background: #fff; color: var(--primary); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+    .pw-box { position: relative; }
+    .pw-box input { padding-right: 78px; }
+    .pw-toggle { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--primary); font-weight: 600; font-size: 13px; padding: 8px; cursor: pointer; }
+    .check { display: flex; align-items: center; gap: 8px; margin: 14px 0 4px; font-size: 14px; color: #374151; font-weight: 400; }
+    .check input { width: 18px; height: 18px; margin: 0; }
+
+    /* ---------- Layout aplikasi ---------- */
+    .app { display: flex; min-height: 100vh; }
+    .sidebar { display: none; }
+    .main { flex: 1; min-width: 0; }
+    .topbar {
+      position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 16px; padding-top: calc(10px + env(safe-area-inset-top)); background: #fff; border-bottom: 1px solid var(--border);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+    .brand .logo { width: 34px; height: 34px; margin: 0; border-radius: 9px; font-size: 12px; }
+    .content { max-width: 800px; margin: 0 auto; padding: 18px 16px calc(var(--nav-h) + 28px + env(safe-area-inset-bottom)); }
+    .bottomnav {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; background: #fff;
+      border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom);
+    }
+    .nav-btn {
+      flex: 1; height: var(--nav-h); background: none; border: none; cursor: pointer; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 2px; font-size: 12px; font-weight: 600; color: var(--muted);
+    }
+    .nav-btn .ico { font-size: 22px; line-height: 1; }
+    .nav-btn.active { color: var(--primary); }
+
+    /* ---------- Daftar kegiatan ---------- */
+    .entry { border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-top: 10px; background: #fff; }
+    .tag { display: inline-block; background: var(--primary-soft); color: var(--primary-dark); padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+    .entry-desc { font-size: 15px; }
+    .entry-actions, .edit-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .empty { text-align: center; color: var(--muted); padding: 28px 10px; font-size: 14px; }
+    .empty .big { font-size: 34px; display: block; margin-bottom: 6px; }
+    .datebar { display: flex; gap: 8px; align-items: center; }
+    .datebar input { flex: 1; }
+    .date-label { font-weight: 600; margin: 12px 0 0; }
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+    .stat { background: var(--bg); border-radius: 12px; padding: 14px; text-align: center; }
+    .stat b { display: block; font-size: 26px; color: var(--primary); }
+    .stat span { font-size: 13px; color: var(--muted); }
+    .btn-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+    @media (min-width: 640px) { .btn-stack { flex-direction: row; } .btn-stack .btn { flex: 1; } }
+    .result-box { margin-top: 14px; padding: 14px; border-radius: 12px; background: var(--ok-soft); color: #0d652d; }
+
+    /* ---------- Pratinjau laporan & cetak ---------- */
+    .paper { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 16px; overflow-x: auto; margin-top: 14px; }
+    .report { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #000; min-width: 620px; }
+    .report .kop { text-align: center; font-weight: bold; line-height: 1.35; }
+    .report .kop .t1 { font-size: 12px; }
+    .report .judul { text-align: center; font-weight: bold; margin: 14px 0 2px; font-size: 13px; }
+    .report .periode { text-align: center; margin-bottom: 10px; }
+    .report .ident td { border: 0; padding: 1px 4px 1px 0; }
+    .report table { width: 100%; border-collapse: collapse; }
+    .report table.data { margin-top: 10px; }
+    .report table.data th, .report table.data td { border: 1px solid #000; padding: 3px 5px; vertical-align: top; }
+    .report table.data th { background: #eee; text-align: center; }
+    .report .c { text-align: center; }
+    .report .libur { background: #fdecea; text-align: center; }
+    .report tr { page-break-inside: avoid; }
+    .report .ttd { margin-top: 16px; page-break-inside: avoid; }
+    .report .ttd td { border: 0; text-align: center; width: 50%; vertical-align: top; }
+    .report .ttd .space { height: 62px; }
+    #printArea { display: none; }
+    @media print {
+      @page { size: A4 portrait; margin: 12mm; }
+      body { background: #fff; }
+      body > *:not(#printArea) { display: none !important; }
+      #printArea { display: block !important; }
+      #printArea .report { min-width: 0; }
+    }
+
+    #toast {
+      position: fixed; left: 50%; transform: translateX(-50%) translateY(20px); bottom: calc(var(--nav-h) + 20px + env(safe-area-inset-bottom));
+      background: #111827; color: #fff; padding: 11px 18px; border-radius: 10px; font-size: 14px; opacity: 0;
+      pointer-events: none; transition: all .25s; z-index: 50; max-width: 90vw; text-align: center;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ---------- Desktop ---------- */
+    @media (min-width: 900px) {
+      .sidebar {
+        display: flex; flex-direction: column; justify-content: space-between; width: 260px; flex-shrink: 0;
+        position: sticky; top: 0; height: 100vh; background: #fff; border-right: 1px solid var(--border); padding: 22px 16px;
+      }
+      .side-nav { display: flex; flex-direction: column; gap: 6px; margin-top: 26px; }
+      .side-btn { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: none; background: none; border-radius: 10px; cursor: pointer; font-size: 15px; font-weight: 600; color: #374151; text-align: left; }
+      .side-btn:hover { background: #f3f4f6; }
+      .side-btn.active { background: var(--primary-soft); color: var(--primary-dark); }
+      .side-user { font-size: 13px; color: var(--muted); margin-bottom: 10px; word-break: break-word; }
+      .side-user b { display: block; color: var(--text); font-size: 14px; }
+      .topbar, .bottomnav { display: none; }
+      .content { padding: 34px 32px 40px; }
+      #toast { bottom: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== MASUK / DAFTAR ==================== -->
+  <div id="authScreen" class="auth-wrap hidden">
+    <div class="card auth-card">
+      <div class="auth-head">
+        <div class="logo">LKB</div>
+        <h1>E-LKB</h1>
+        <div class="muted">Laporan Kinerja Bulanan</div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" id="tabLogin" type="button">Masuk</button>
+        <button class="tab" id="tabRegister" type="button">Daftar</button>
+      </div>
+
+      <!-- Form Masuk -->
+      <form id="formLogin" autocomplete="on">
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" autocomplete="username" placeholder="nama@uinkediri.ac.id" />
+        <label for="loginPassword">Password</label>
+        <div class="pw-box">
+          <input type="password" id="loginPassword" autocomplete="current-password" placeholder="Password" />
+          <button type="button" class="pw-toggle" data-toggle="loginPassword">Lihat</button>
+        </div>
+        <label class="check"><input type="checkbox" id="rememberLogin" checked> Ingat di perangkat ini</label>
+        <button id="btnLogin" type="submit" class="btn btn-primary btn-block" style="margin-top:14px;">Masuk</button>
+        <div id="loginStatus" class="status"></div>
+      </form>
+
+      <!-- Form Daftar -->
+      <form id="formRegister" class="hidden" autocomplete="off">
+        <div class="grid-2">
+          <div><label for="regNama">Nama lengkap (beserta gelar)</label><input type="text" id="regNama" /></div>
+          <div><label for="regNip">NIP</label><input type="text" id="regNip" inputmode="numeric" /></div>
+        </div>
+        <label for="regEmail">Email institusi</label>
+        <input type="email" id="regEmail" placeholder="nama@uinkediri.ac.id" />
+        <div class="grid-2">
+          <div>
+            <label for="regPassword">Password (min. 8 karakter)</label>
+            <input type="password" id="regPassword" autocomplete="new-password" />
+          </div>
+          <div>
+            <label for="regPassword2">Ulangi password</label>
+            <input type="password" id="regPassword2" autocomplete="new-password" />
+          </div>
+        </div>
+        <div class="grid-2">
+          <div><label for="regJabatan">Jabatan</label><input type="text" id="regJabatan" placeholder="mis. Dosen Asisten Ahli" /></div>
+          <div><label for="regUnit">Unit kerja</label><input type="text" id="regUnit" value="Fakultas Tarbiyah" /></div>
+        </div>
+        <div class="grid-2">
+          <div><label for="regAtasan">Nama atasan langsung</label><input type="text" id="regAtasan" /></div>
+          <div><label for="regNipAtasan">NIP atasan</label><input type="text" id="regNipAtasan" inputmode="numeric" /></div>
+        </div>
+        <label for="regKode">Kode undangan</label>
+        <input type="text" id="regKode" autocomplete="off" placeholder="Minta ke admin" />
+        <button id="btnRegister" type="submit" class="btn btn-primary btn-block" style="margin-top:16px;">Daftar &amp; Masuk</button>
+        <div id="registerStatus" class="status"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== APLIKASI ==================== -->
+  <div id="appShell" class="app hidden">
+
+    <aside class="sidebar">
+      <div>
+        <div class="brand"><div class="logo">LKB</div><span>Laporan Kinerja<br>Bulanan</span></div>
+        <nav class="side-nav">
+          <button class="side-btn" data-view="input"><span>✏️</span> Input Harian</button>
+          <button class="side-btn" data-view="log"><span>📋</span> Log Kegiatan</button>
+          <button class="side-btn" data-view="report"><span>🖨️</span> Cetak Laporan</button>
+          <button class="side-btn" data-view="profile"><span>👤</span> Profil</button>
+        </nav>
+      </div>
+      <div>
+        <div class="side-user"><b class="js-user-name">-</b><span class="js-user-info"></span></div>
+        <button class="btn btn-outline btn-block btn-sm js-logout">Keluar</button>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <div class="brand"><div class="logo">LKB</div><span class="js-user-name">-</span></div>
+        <button class="btn btn-outline btn-sm js-logout">Keluar</button>
+      </header>
+
+      <main class="content">
+
+        <!-- ========== MENU 1: INPUT HARIAN ========== -->
+        <section id="view-input">
+          <h2 class="page-title">Input Kegiatan Harian</h2>
+          <p class="page-sub">Ceritakan semua kegiatan hari itu. AI akan memecahnya menjadi baris laporan.</p>
+
+          <div id="aiNotice" class="notice hidden">
+            <b>Fitur AI belum aktif.</b> Atur API key Gemini Anda di menu Profil, atau tambahkan kegiatan secara manual.
+            <div class="row" style="margin-top:10px;">
+              <button id="btnGoProfileKey" class="btn btn-primary btn-sm">Atur API key</button>
+              <button id="btnGoManual" class="btn btn-outline btn-sm">Input manual</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <label for="tanggalInput">Tanggal kegiatan</label>
+            <input type="date" id="tanggalInput" />
+
+            <label for="narasiInput">Cerita kegiatan</label>
+            <textarea id="narasiInput" placeholder="Contoh: Pagi mengajar 2 kelas statistik sosial, siang rapat internal LPM persiapan AMI, sore menyiapkan materi ajar..."></textarea>
+
+            <div class="row" style="margin-top:12px;">
+              <button id="btnMic" type="button" class="btn btn-mic">🎤 Rekam Suara</button>
+              <span id="micStatus" class="muted"></span>
+            </div>
+
+            <button id="btnSave" class="btn btn-primary btn-block" style="margin-top:16px;">Simpan &amp; Proses dengan AI</button>
+            <div id="saveStatus" class="status"></div>
+          </div>
+
+          <div id="savedCard" class="card hidden">
+            <div class="row-between">
+              <h3>Hasil proses AI</h3>
+              <button id="btnGoLog" class="btn btn-outline btn-sm">Lihat di Log</button>
+            </div>
+            <div id="savedList"></div>
+          </div>
+        </section>
+
+        <!-- ========== MENU 2: LOG KEGIATAN ========== -->
+        <section id="view-log" class="hidden">
+          <h2 class="page-title">Log Kegiatan Harian</h2>
+          <p class="page-sub">Pilih tanggal untuk melihat, mengubah, menambah, atau menghapus kegiatan.</p>
+
+          <div class="card">
+            <div class="datebar">
+              <button id="btnPrevDay" class="btn btn-outline" aria-label="Hari sebelumnya">‹</button>
+              <input type="date" id="logDate" aria-label="Pilih tanggal" />
+              <button id="btnNextDay" class="btn btn-outline" aria-label="Hari berikutnya">›</button>
+            </div>
+            <div class="row-between">
+              <p class="date-label" id="logDateLabel"></p>
+              <div class="row" style="margin-top:12px;">
+                <button id="btnAddStory" class="btn btn-outline btn-sm">🎤 Cerita</button>
+                <button id="btnAddManual" class="btn btn-outline btn-sm">+ Manual</button>
+              </div>
+            </div>
+            <div id="manualBox"></div>
+            <div id="logList"></div>
+          </div>
+        </section>
+
+        <!-- ========== MENU 3: CETAK LAPORAN ========== -->
+        <section id="view-report" class="hidden">
+          <h2 class="page-title">Cetak Laporan Bulanan</h2>
+          <p class="page-sub">Lihat pratinjau, lalu cetak dari browser atau unduh PDF resmi.</p>
+
+          <div class="card">
+            <label for="monthInput">Bulan laporan</label>
+            <input type="month" id="monthInput" />
+            <div class="stat-grid">
+              <div class="stat"><b id="statDays">-</b><span>hari terisi</span></div>
+              <div class="stat"><b id="statTotal">-</b><span>total kegiatan</span></div>
+            </div>
+
+            <div class="btn-stack">
+              <button id="btnPreview" class="btn btn-primary">👁️ Pratinjau Laporan</button>
+              <button id="btnPrint" class="btn btn-outline" disabled>🖨️ Cetak / Simpan PDF (browser)</button>
+              <button id="btnPdf" class="btn btn-outline">📄 Unduh PDF resmi</button>
+            </div>
+            <div id="reportStatus" class="status"></div>
+            <div id="reportResult" class="result-box hidden"></div>
+            <div id="previewPaper" class="paper hidden"></div>
+          </div>
+        </section>
+
+        <!-- ========== MENU 4: PROFIL ========== -->
+        <section id="view-profile" class="hidden">
+          <h2 class="page-title">Profil</h2>
+          <p class="page-sub">Data ini dipakai pada kop dan tanda tangan laporan.</p>
+
+          <div class="card">
+            <div class="grid-2">
+              <div><label for="pfNama">Nama lengkap</label><input type="text" id="pfNama" /></div>
+              <div><label for="pfNip">NIP</label><input type="text" id="pfNip" inputmode="numeric" /></div>
+            </div>
+            <label for="pfEmail">Email</label>
+            <input type="email" id="pfEmail" disabled />
+            <div class="grid-2">
+              <div><label for="pfJabatan">Jabatan</label><input type="text" id="pfJabatan" /></div>
+              <div><label for="pfUnit">Unit kerja</label><input type="text" id="pfUnit" /></div>
+            </div>
+            <div class="grid-2">
+              <div><label for="pfAtasan">Nama atasan langsung</label><input type="text" id="pfAtasan" /></div>
+              <div><label for="pfNipAtasan">NIP atasan</label><input type="text" id="pfNipAtasan" inputmode="numeric" /></div>
+            </div>
+            <button id="btnSaveProfile" class="btn btn-primary btn-block" style="margin-top:16px;">Simpan Profil</button>
+            <div id="profileStatus" class="status"></div>
+            <div id="fileLinkBox" class="muted" style="margin-top:10px;"></div>
+
+            <hr class="section-sep">
+            <h3>Ganti Password</h3>
+            <div class="grid-2">
+              <div><label for="pwOld">Password lama</label><input type="password" id="pwOld" autocomplete="current-password" /></div>
+              <div></div>
+              <div><label for="pwNew">Password baru (min. 8)</label><input type="password" id="pwNew" autocomplete="new-password" /></div>
+              <div><label for="pwNew2">Ulangi password baru</label><input type="password" id="pwNew2" autocomplete="new-password" /></div>
+            </div>
+            <button id="btnChangePw" class="btn btn-outline btn-block" style="margin-top:16px;">Ganti Password</button>
+            <div id="pwStatus" class="status"></div>
+          </div>
+
+          <div class="card" id="geminiCard">
+            <h3>API Key Gemini</h3>
+            <p class="muted" style="margin:6px 0 0;">Dipakai untuk memproses cerita menjadi baris laporan. Setiap dosen memakai key miliknya sendiri.</p>
+            <div id="keyState" class="status"></div>
+
+            <label for="gemKey">API key</label>
+            <div class="pw-box">
+              <input type="password" id="gemKey" autocomplete="off" placeholder="AIza..." />
+              <button type="button" class="pw-toggle" data-toggle="gemKey">Lihat</button>
+            </div>
+            <div class="row" style="margin-top:14px;">
+              <button id="btnSaveKey" class="btn btn-primary">Simpan Key</button>
+              <button id="btnRemoveKey" class="btn btn-danger">Hapus Key</button>
+            </div>
+            <div id="keyStatus" class="status"></div>
+
+            <details style="margin-top:14px;">
+              <summary>Cara mendapatkan API key (gratis)</summary>
+              <ol>
+                <li>Buka <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> dengan akun Google Anda.</li>
+                <li>Klik <b>Create API key</b>.</li>
+                <li>Salin key (diawali <code>AIza</code>), tempel di kolom di atas, lalu <b>Simpan Key</b>.</li>
+              </ol>
+            </details>
+            <p class="muted" style="margin:14px 0 0;">Key disimpan di spreadsheet Master DB tanpa enkripsi dan hanya dapat dilihat admin sistem. Jangan bagikan key Anda ke orang lain.</p>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <nav class="bottomnav" aria-label="Menu utama">
+      <button class="nav-btn" data-view="input"><span class="ico">✏️</span>Input</button>
+      <button class="nav-btn" data-view="log"><span class="ico">📋</span>Log</button>
+      <button class="nav-btn" data-view="report"><span class="ico">🖨️</span>Cetak</button>
+      <button class="nav-btn" data-view="profile"><span class="ico">👤</span>Profil</button>
+    </nav>
+  </div>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Area khusus cetak (hanya tampil saat window.print) -->
+  <div id="printArea"></div>
+
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
+    }
+  </script>
+</body>
+</html>
