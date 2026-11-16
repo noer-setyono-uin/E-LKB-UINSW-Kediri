@@ -178,13 +178,21 @@
   <!-- SCRIPT APLIKASI -->
   <script>
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbyaDEVaDubJoFvqR4URUptcd11ipAN1dmmr7ObXO6XOg1sstbrToX5AppL9VA_m-LQ6/exec'; // Ganti dengan URL /exec Apps Script Anda
+    const APP_API_TOKEN = 'LkbUinKediri2026_SecureKey'; // Wajib SAMA dengan Script Properties
+
     let state = { token: localStorage.getItem('lkb_token') || '', profile: null };
 
     async function api(action, payload = {}) {
       const res = await fetch(GAS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ token: state.token, action, payload })
+        // Kirim APP_API_TOKEN sebagai token utama otentikasi API
+        body: JSON.stringify({ 
+          token: APP_API_TOKEN, 
+          userToken: state.token, 
+          action: action, 
+          payload: payload 
+        })
       });
       const json = await res.json();
       if (!json.ok) {
