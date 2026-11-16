@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>E-LKB UIN Syekh Wasil Kediri</title>
+  <meta name="theme-color" content="#047857">
+  <link rel="manifest" href="manifest.json">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { uin: { 50: '#ecfdf5', 600: '#059669', 700: '#047857', 800: '#065f46' } } } }
+    }
+  </script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans pb-24">
+
+  <!-- AUTH SCREEN -->
+  <div id="authScreen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-emerald-800 to-teal-900">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md border-t-4 border-emerald-600">
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 bg-emerald-700 text-white rounded-2xl mx-auto flex items-center justify-center text-2xl font-bold shadow-md mb-3"><i class="fas fa-university"></i></div>
+        <h1 class="text-2xl font-bold text-emerald-900">E-LKB UIN Kediri</h1>
+        <p class="text-xs text-slate-500 mt-1">Laporan Kinerja Bulanan Terintegrasi</p>
+      </div>
+
+      <div class="flex bg-slate-100 p-1 rounded-xl mb-6">
+        <button onclick="switchAuthTab('login')" id="tabLogin" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white text-emerald-800 shadow-sm transition">Masuk</button>
+        <button onclick="switchAuthTab('register')" id="tabRegister" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 transition">Daftar Akun</button>
+      </div>
+
+      <!-- Form Login -->
+      <form id="formLogin" onsubmit="onLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Email Institusi</label>
+          <input type="email" id="loginEmail" required placeholder="nama@uinkediri.ac.id" class="w-full border rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Password</label>
+          <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full border rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+        </div>
+        <button type="submit" id="btnLogin" class="w-full bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-emerald-800 transition">Masuk Aplikasi</button>
+      </form>
+
+      <!-- Form Register -->
+      <form id="formRegister" onsubmit="onRegister(event)" class="space-y-3 hidden">
+        <div class="grid grid-cols-2 gap-2">
+          <div><label class="block text-xs font-bold text-slate-600 mb-1">Nama & Gelar</label><input type="text" id="regNama" required class="w-full border rounded-lg p-2.5 text-sm"></div>
+          <div><label class="block text-xs font-bold text-slate-600 mb-1">NIP</label><input type="text" id="regNip" required class="w-full border rounded-lg p-2.5 text-sm"></div>
+        </div>
+        <div><label class="block text-xs font-bold text-slate-600 mb-1">Email (@uinkediri.ac.id)</label><input type="email" id="regEmail" required class="w-full border rounded-lg p-2.5 text-sm"></div>
+        <div class="grid grid-cols-2 gap-2">
+          <div><label class="block text-xs font-bold text-slate-600 mb-1">Password</label><input type="password" id="regPassword" required class="w-full border rounded-lg p-2.5 text-sm"></div>
+          <div><label class="block text-xs font-bold text-slate-600 mb-1">Jabatan</label><input type="text" id="regJabatan" required value="Dosen" class="w-full border rounded-lg p-2.5 text-sm"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div><label class="block text-xs font-bold text-slate-600 mb-1">Atasan Langsung</label><input type="text" id="regAtasan" required class="w-full border rounded-lg p-2.5 text-sm"></div>
+          <div><label class="block text-xs font-bold text-slate-600 mb-1">NIP Atasan</label><input type="text" id="regNipAtasan" required class="w-full border rounded-lg p-2.5 text-sm"></div>
+        </div>
+        <button type="submit" id="btnRegister" class="w-full bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-emerald-800 transition mt-2">Daftar & Buat Spreadsheet</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- APP SHELL -->
+  <div id="appShell" class="hidden">
+    <!-- Topbar -->
+    <header class="bg-emerald-700 text-white px-6 py-4 sticky top-0 z-30 shadow-md flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-white text-emerald-800 rounded-xl flex items-center justify-center font-bold shadow"><i class="fas fa-book"></i></div>
+        <div>
+          <h2 class="font-bold text-base leading-tight" id="userNameHeader">-</h2>
+          <p class="text-xs text-emerald-200" id="userInfoHeader">-</p>
+        </div>
+      </div>
+      <button onclick="logout()" class="text-emerald-200 hover:text-white p-2 font-semibold text-sm"><i class="fas fa-sign-out-alt mr-1"></i> Keluar</button>
+    </header>
+
+    <!-- Content Area -->
+    <main class="max-w-4xl mx-auto p-4 mb-16" id="mainContent">
+      
+      <!-- MENU 1: INPUT HARIAN -->
+      <section id="view-input" class="space-y-4">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <h3 class="font-bold text-lg text-emerald-900 mb-1">Input Kegiatan Harian</h3>
+          <p class="text-xs text-slate-500 mb-4">Gunakan AI untuk merapikan narasi suara/teks otomatis, atau input manual.</p>
+          
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Tanggal Kegiatan</label>
+          <input type="date" id="tanggalInput" onchange="loadLogsForToday()" class="w-full border border-slate-300 rounded-xl p-3 text-sm mb-4">
+
+          <!-- Tabs Mode Input -->
+          <div class="flex gap-2 mb-4 bg-slate-100 p-1.5 rounded-xl">
+            <button onclick="switchInputMode('ai')" id="modeAiBtn" class="flex-1 py-2 bg-white shadow-sm rounded-lg text-xs font-bold text-emerald-800 transition"><i class="fas fa-wand-magic-sparkles mr-1"></i> AI & Suara</button>
+            <button onclick="switchInputMode('manual')" id="modeManBtn" class="flex-1 py-2 text-xs font-bold text-slate-500 rounded-lg transition">Input Manual</button>
+          </div>
+
+          <!-- Mode AI -->
+          <div id="aiInputArea" class="space-y-3">
+            <div class="flex flex-col items-center justify-center py-6 bg-emerald-50/50 rounded-xl border border-dashed border-emerald-200">
+              <button id="btnMic" onclick="toggleMic()" class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 text-2xl shadow flex items-center justify-center transition hover:bg-emerald-200"><i class="fas fa-microphone"></i></button>
+              <p id="micStatus" class="text-xs font-semibold text-emerald-800 mt-2">Ketuk untuk mulai merekam suara</p>
+            </div>
+            <textarea id="narasiInput" rows="3" placeholder="Ceritakan kegiatan Anda hari ini secara bebas..." class="w-full border rounded-xl p-3 text-sm"></textarea>
+            <button onclick="saveNarasiAI()" class="w-full bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow hover:bg-emerald-800 transition">✨ Proses dengan AI & Simpan</button>
+          </div>
+
+          <!-- Mode Manual -->
+          <div id="manualInputArea" class="space-y-3 hidden">
+            <textarea id="manDesc" rows="2" placeholder="Deskripsi kegiatan..." class="w-full border rounded-xl p-3 text-sm"></textarea>
+            <div class="grid grid-cols-3 gap-2">
+              <select id="manJudul" class="border rounded-xl p-2.5 text-sm bg-white col-span-1">
+                <option value="Perkuliahan">Perkuliahan</option><option value="Rapat">Rapat</option><option value="Bimbingan">Bimbingan</option><option value="Validasi">Validasi</option><option value="Sosialisasi">Sosialisasi</option><option value="Seminar">Seminar</option><option value="Maintenance">Maintenance</option><option value="Evaluasi">Evaluasi</option><option value="Bahan Ajar">Bahan Ajar</option><option value="Pengabdian">Pengabdian</option><option value="Penelitian">Penelitian</option>
+              </select>
+              <input type="number" id="manJml" value="1" min="1" class="border rounded-xl p-2.5 text-sm text-center">
+              <input type="text" id="manSat" value="Kegiatan" placeholder="Satuan" class="border rounded-xl p-2.5 text-sm text-center">
+            </div>
+            <button onclick="saveManualLog()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow hover:bg-blue-700 transition">Simpan Entri Manual</button>
+          </div>
+        </div>
+
+        <!-- Daftar Kegiatan Hari Ini -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <h4 class="font-bold text-sm text-slate-700 mb-3"><i class="fas fa-list-check text-emerald-600 mr-2"></i> Kegiatan Tercatat pada Tanggal Ini</h4>
+          <div id="todayLogsList" class="space-y-2"></div>
+        </div>
+      </section>
+
+      <!-- MENU 2: CETAK LAPORAN -->
+      <section id="view-report" class="hidden space-y-4">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <h3 class="font-bold text-lg text-emerald-900 mb-1">Cetak Laporan Bulanan</h3>
+          <p class="text-xs text-slate-500 mb-4">Sistem akan menyusun data ke sheet resmi lalu mengekspornya ke PDF.</p>
+          
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Pilih Bulan</label>
+          <input type="month" id="monthInput" onchange="loadMonthSummary()" class="w-full border rounded-xl p-3 text-sm mb-4">
+          
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="bg-slate-50 p-4 rounded-xl text-center border"><b class="text-xl text-emerald-700" id="statDays">-</b><span class="block text-xs text-slate-500 mt-1">Hari Terisi</span></div>
+            <div class="bg-slate-50 p-4 rounded-xl text-center border"><b class="text-xl text-emerald-700" id="statTotal">-</b><span class="block text-xs text-slate-500 mt-1">Total Kegiatan</span></div>
+          </div>
+
+          <button onclick="generatePdfReport()" class="w-full bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow hover:bg-emerald-800 transition"><i class="fas fa-file-pdf mr-2"></i> Unduh Laporan PDF Resmi</button>
+          <div id="pdfResultBox" class="mt-4 text-center"></div>
+        </div>
+      </section>
+
+      <!-- MENU 3: PROFIL & GEMINI KEY -->
+      <section id="view-profile" class="hidden space-y-4">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+          <h3 class="font-bold text-lg text-emerald-900 mb-2">Profil & Pengaturan</h3>
+          <div><label class="block text-xs font-bold text-slate-600 mb-1">Nama Lengkap & Gelar</label><input type="text" id="pfNama" class="w-full border rounded-xl p-2.5 text-sm"></div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="block text-xs font-bold text-slate-600 mb-1">NIP</label><input type="text" id="pfNip" class="w-full border rounded-xl p-2.5 text-sm"></div>
+            <div><label class="block text-xs font-bold text-slate-600 mb-1">Jabatan</label><input type="text" id="pfJabatan" class="w-full border rounded-xl p-2.5 text-sm"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="block text-xs font-bold text-slate-600 mb-1">Atasan Langsung</label><input type="text" id="pfAtasan" class="w-full border rounded-xl p-2.5 text-sm"></div>
+            <div><label class="block text-xs font-bold text-slate-600 mb-1">NIP Atasan</label><input type="text" id="pfNipAtasan" class="w-full border rounded-xl p-2.5 text-sm"></div>
+          </div>
+          <div><label class="block text-xs font-bold text-slate-600 mb-1">API Key Gemini Pribadi</label><input type="password" id="pfGemKey" placeholder="AIza..." class="w-full border rounded-xl p-2.5 text-sm"></div>
+          <button onclick="saveProfile()" class="w-full bg-emerald-700 text-white font-bold py-3 rounded-xl shadow hover:bg-emerald-800 transition">Simpan Perubahan Profil</button>
+          <div id="fileLinkContainer" class="pt-2 text-center text-xs"></div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Navbar (Mobile Friendly) -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around py-2 z-30 shadow-lg">
+      <button onclick="switchView('input')" id="navBtnInput" class="flex flex-col items-center text-emerald-700 font-bold text-xs"><i class="fas fa-pencil-alt text-lg mb-0.5"></i> Input</button>
+      <button onclick="switchView('report')" id="navBtnReport" class="flex flex-col items-center text-slate-400 font-bold text-xs"><i class="fas fa-print text-lg mb-0.5"></i> Cetak</button>
+      <button onclick="switchView('profile')" id="navBtnProfile" class="flex flex-col items-center text-slate-400 font-bold text-xs"><i class="fas fa-user-cog text-lg mb-0.5"></i> Profil</button>
+    </nav>
+  </div>
+
+  <!-- SCRIPT APLIKASI -->
+  <script>
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyaDEVaDubJoFvqR4URUptcd11ipAN1dmmr7ObXO6XOg1sstbrToX5AppL9VA_m-LQ6/exec'; // Ganti dengan URL /exec Apps Script Anda
+    let state = { token: localStorage.getItem('lkb_token') || '', profile: null };
+
+    async function api(action, payload = {}) {
+      const res = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ token: state.token, action, payload })
+      });
+      const json = await res.json();
+      if (!json.ok) {
+        if (json.code === 'AUTH') logout();
+        throw new Error(json.error || 'Terjadi kesalahan sistem.');
+      }
+      return json.data;
+    }
+
+    window.onload = async () => {
+      const today = new Date().toISOString().slice(0,10);
+      document.getElementById('tanggalInput').value = today;
+      document.getElementById('monthInput').value = today.slice(0,7);
+
+      if (state.token) {
+        try {
+          state.profile = await api('getProfile');
+          initApp();
+        } catch(e) { logout(); }
+      }
+    };
+
+    function switchAuthTab(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('formLogin').classList.toggle('hidden', !isLogin);
+      document.getElementById('formRegister').classList.toggle('hidden', isLogin);
+      document.getElementById('tabLogin').className = isLogin ? 'flex-1 py-2 text-xs font-bold rounded-lg bg-white text-emerald-800 shadow-sm transition' : 'flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 transition';
+      document.getElementById('tabRegister').className = !isLogin ? 'flex-1 py-2 text-xs font-bold rounded-lg bg-white text-emerald-800 shadow-sm transition' : 'flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 transition';
+    }
+
+    async function onLogin(e) {
+      e.preventDefault();
+      Swal.fire({ title: 'Masuk...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      try {
+        const res = await api('login', { email: document.getElementById('loginEmail').value, password: document.getElementById('loginPassword').value });
+        state.token = res.token; state.profile = res.profile;
+        localStorage.setItem('lkb_token', state.token);
+        Swal.close(); initApp();
+      } catch (err) { Swal.fire('Gagal Masuk', err.message, 'error'); }
+    }
+
+    async function onRegister(e) {
+      e.preventDefault();
+      Swal.fire({ title: 'Membuat Akun & Spreadsheet...', text: 'Mohon tunggu sebentar...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      try {
+        const res = await api('register', {
+          nama: document.getElementById('regNama').value, nip: document.getElementById('regNip').value,
+          email: document.getElementById('regEmail').value, password: document.getElementById('regPassword').value,
+          jabatan: document.getElementById('regJabatan').value, atasan: document.getElementById('regAtasan').value,
+          nipAtasan: document.getElementById('regNipAtasan').value
+        });
+        state.token = res.token; state.profile = res.profile;
+        localStorage.setItem('lkb_token', state.token);
+        Swal.fire('Berhasil!', 'Akun dan file Google Drive Anda telah siap.', 'success');
+        initApp();
+      } catch (err) { Swal.fire('Gagal Daftar', err.message, 'error'); }
+    }
+
+    function logout() {
+      localStorage.removeItem('lkb_token');
+      state.token = ''; state.profile = null;
+      document.getElementById('authScreen').classList.remove('hidden');
+      document.getElementById('appShell').classList.add('hidden');
+    }
+
+    function initApp() {
+      document.getElementById('authScreen').classList.add('hidden');
+      document.getElementById('appShell').classList.remove('hidden');
+      document.getElementById('userNameHeader').innerText = state.profile.nama;
+      document.getElementById('userInfoHeader').innerText = `NIP. ${state.profile.nip}`;
+      loadLogsForToday();
+      loadMonthSummary();
+    }
+
+    function switchView(view) {
+      ['input', 'report', 'profile'].forEach(v => {
+        document.getElementById('view-' + v).classList.toggle('hidden', v !== view);
+      });
+      if (view === 'profile') fillProfileForm();
+    }
+
+    function switchInputMode(mode) {
+      const isAi = mode === 'ai';
+      document.getElementById('aiInputArea').classList.toggle('hidden', !isAi);
+      document.getElementById('manualInputArea').classList.toggle('hidden', isAi);
+      document.getElementById('modeAiBtn').className = isAi ? 'flex-1 py-2 bg-white shadow-sm rounded-lg text-xs font-bold text-emerald-800 transition' : 'flex-1 py-2 text-xs font-bold text-slate-500 transition';
+      document.getElementById('modeManBtn').className = !isAi ? 'flex-1 py-2 bg-white shadow-sm rounded-lg text-xs font-bold text-emerald-800 transition' : 'flex-1 py-2 text-xs font-bold text-slate-500 transition';
+    }
+
+    // --- LOGS & CRUD ---
+    async function loadLogsForToday() {
+      const tanggal = document.getElementById('tanggalInput').value;
+      const listContainer = document.getElementById('todayLogsList');
+      listContainer.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Memuat data...</p>';
+      
+      try {
+        const logs = await api('getLogs', { tanggal });
+        if (!logs.length) {
+          listContainer.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Belum ada kegiatan pada tanggal ini.</p>';
+          return;
+        }
+        listContainer.innerHTML = logs.map(l => `
+          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border text-sm">
+            <div>
+              <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">${l.judulLaporan}</span>
+              <p class="font-medium text-slate-800 mt-1">${l.deskripsi}</p>
+              <span class="text-xs text-slate-500">Volume: ${l.jml} ${l.satuan}</span>
+            </div>
+            <div class="flex gap-1">
+              <button onclick='editLogModal(${JSON.stringify(l)})' class="text-blue-600 hover:bg-blue-50 p-2 rounded"><i class="fas fa-pen"></i></button>
+              <button onclick='deleteLog("${l.id}")' class="text-red-600 hover:bg-red-50 p-2 rounded"><i class="fas fa-trash"></i></button>
+            </div>
+          </div>
+        `).join('');
+      } catch(e) { listContainer.innerHTML = `<p class="text-xs text-red-500 text-center">${e.message}</p>`; }
+    }
+
+    async function saveNarasiAI() {
+      const tanggal = document.getElementById('tanggalInput').value;
+      const narasi = document.getElementById('narasiInput').value.trim();
+      if (!narasi) return Swal.fire('Perhatian', 'Ceritakan kegiatan Anda terlebih dahulu.', 'warning');
+      
+      Swal.fire({ title: 'AI Sedang Menganalisis...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      try {
+        await api('saveNarasi', { tanggal, narasi });
+        document.getElementById('narasiInput').value = '';
+        Swal.fire('Berhasil!', 'Kegiatan tersimpan otomatis.', 'success');
+        loadLogsForToday();
+      } catch(e) { Swal.fire('Gagal', e.message, 'error'); }
+    }
+
+    async function saveManualLog() {
+      const tanggal = document.getElementById('tanggalInput').value;
+      const desc = document.getElementById('manDesc').value.trim();
+      if (!desc) return Swal.fire('Perhatian', 'Deskripsi wajib diisi.', 'warning');
+
+      try {
+        await api('addLog', {
+          tanggal, deskripsi: desc,
+          judulLaporan: document.getElementById('manJudul').value,
+          jml: document.getElementById('manJml').value,
+          satuan: document.getElementById('manSat').value
+        });
+        document.getElementById('manDesc').value = '';
+        Swal.fire('Sukses', 'Entri manual ditambahkan.', 'success');
+        loadLogsForToday();
+      } catch(e) { Swal.fire('Gagal', e.message, 'error'); }
+    }
+
+    async function editLogModal(l) {
+      const { value: formValues } = await Swal.fire({
+        title: 'Edit Kegiatan',
+        html: `
+          <textarea id="swalDesc" class="swal2-textarea" placeholder="Deskripsi">${l.deskripsi}</textarea>
+          <input id="swalJml" type="number" class="swal2-input" value="${l.jml}">
+          <input id="swalSat" type="text" class="swal2-input" value="${l.satuan}">
+        `,
+        focusConfirm: false,
+        preConfirm: () => ({
+          deskripsi: document.getElementById('swalDesc').value,
+          judulLaporan: l.judulLaporan,
+          jml: document.getElementById('swalJml').value,
+          satuan: document.getElementById('swalSat').value
+        })
+      });
+
+      if (formValues) {
+        try {
+          await api('updateLog', { id: l.id, fields: formValues });
+          Swal.fire('Tersimpan', 'Perubahan berhasil.', 'success');
+          loadLogsForToday();
+        } catch(e) { Swal.fire('Error', e.message, 'error'); }
+      }
+    }
+
+    async function deleteLog(id) {
+      if (!(await Swal.fire({ title: 'Hapus kegiatan ini?', icon: 'warning', showCancelButton: true })).isConfirmed) return;
+      try {
+        await api('deleteLog', { id });
+        loadLogsForToday();
+        Swal.fire('Terhapus', '', 'success');
+      } catch(e) { Swal.fire('Gagal', e.message, 'error'); }
+    }
+
+    // --- VOICE TO TEXT ---
+    let recognition = null, isRecording = false;
+    function setupSpeech() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) return;
+      recognition = new SR(); recognition.lang = 'id-ID'; recognition.continuous = true; recognition.interimResults = true;
+      recognition.onresult = e => {
+        let text = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) text += e.results[i][0].transcript;
+        document.getElementById('narasiInput').value = text;
+      };
+      recognition.onend = () => { isRecording = false; };
+    }
+    function toggleMic() {
+      if (!recognition) setupSpeech();
+      if (isRecording) { recognition.stop(); isRecording = false; document.getElementById('btnMic').classList.remove('bg-red-500', 'text-white'); }
+      else { recognition.start(); isRecording = true; document.getElementById('btnMic').classList.add('bg-red-500', 'text-white'); }
+    }
+
+    // --- LAPORAN & PROFIL ---
+    async function loadMonthSummary() {
+      const month = document.getElementById('monthInput').value;
+      if (!month) return;
+      try {
+        const res = await api('getMonthSum', { month });
+        document.getElementById('statDays').innerText = res.hariTerisi;
+        document.getElementById('statTotal').innerText = res.totalKegiatan;
+      } catch(e) {}
+    }
+
+    async function generatePdfReport() {
+      const month = document.getElementById('monthInput').value;
+      Swal.fire({ title: 'Menyusun Laporan & PDF...', text: 'Sinkronisasi Google Sheets...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      try {
+        const res = await api('generateReport', { month });
+        Swal.close();
+        const blob = new Blob([Uint8Array.from(atob(res.base64), c => c.charCodeAt(0))], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        document.getElementById('pdfResultBox').innerHTML = `<a href="${url}" download="${res.filename}" class="inline-block bg-blue-600 text-white font-bold px-5 py-3 rounded-xl shadow hover:bg-blue-700 transition"><i class="fas fa-download mr-2"></i> Unduh ${res.filename}</a>`;
+        Swal.fire('Sukses!', 'Dokumen PDF siap diunduh.', 'success');
+      } catch(e) { Swal.fire('Gagal', e.message, 'error'); }
+    }
+
+    function fillProfileForm() {
+      document.getElementById('pfNama').value = state.profile.nama || '';
+      document.getElementById('pfNip').value = state.profile.nip || '';
+      document.getElementById('pfJabatan').value = state.profile.jabatan || '';
+      document.getElementById('pfAtasan').value = state.profile.atasan || '';
+      document.getElementById('pfNipAtasan').value = state.profile.nipAtasan || '';
+      document.getElementById('fileLinkContainer').innerHTML = state.profile.fileUrl ? `<a href="${state.profile.fileUrl}" target="_blank" class="text-emerald-700 font-bold underline">📂 Buka Spreadsheet Pribadi di Google Drive</a>` : '';
+    }
+
+    async function saveProfile() {
+      try {
+        state.profile = await api('updateProfile', {
+          nama: document.getElementById('pfNama').value, nip: document.getElementById('pfNip').value,
+          jabatan: document.getElementById('pfJabatan').value, unitKerja: 'Fakultas Tarbiyah',
+          atasan: document.getElementById('pfAtasan').value, nipAtasan: document.getElementById('pfNipAtasan').value
+        });
+        Swal.fire('Tersimpan', 'Profil berhasil diperbarui.', 'success');
+        initApp();
+      } catch(e) { Swal.fire('Gagal', e.message, 'error'); }
+    }
+  </script>
+</body>
+</html>
