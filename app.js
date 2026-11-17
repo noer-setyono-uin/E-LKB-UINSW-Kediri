@@ -123,6 +123,7 @@ async function confirmBox(opts) {
  * Token sesi dibuat server saat masuk; ID file dosen TIDAK pernah dikirim dari sini.
  */
 async function api(action, payload = {}) {
+  console.log(API_URL, API_URL.indexOf('script.google.com'));
   if (API_URL.indexOf('script.google.com') === -1) {
     throw new Error('API_URL di app.js belum diisi dengan URL Web App Anda.');
   }
