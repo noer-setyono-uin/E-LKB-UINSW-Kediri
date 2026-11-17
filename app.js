@@ -647,10 +647,13 @@ function buildReportHtml(d) {
     .map(r => '<tr><td style="width:90px;">' + r[0] + '</td><td style="width:10px;">:</td><td>' + esc(r[1]) + '</td></tr>').join('');
 
   return '<div class="report">' +
-    '<div class="kop"><div class="t1">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>' +
+    '<div style="display:flex;align-items:center;gap:10px;">' +
+    '<img src="logo-uin.png" alt="Logo UIN" style="width:64px;height:auto;flex:none;" onerror="this.style.visibility=\'hidden\'">' +
+    '<div class="kop" style="flex:1;"><div class="t1">KEMENTERIAN AGAMA REPUBLIK INDONESIA</div>' +
     '<div class="t1">UNIVERSITAS ISLAM NEGERI SYEKH WASIL KEDIRI</div>' +
     '<div style="font-weight:normal;">Jalan Sunan Ampel Nomor 07 Ngronggo Kota Kediri Kode Pos 64127<br>' +
     'Telepon (0354) 689282 Faksimile (0354) 686564 Website: www.uinkediri.ac.id</div></div>' +
+    '<div style="width:64px;flex:none;"></div></div>' +   // penyeimbang agar teks kop tetap di tengah halaman
     '<hr style="border:0;border-top:2px solid #000;margin:8px 0 0;">' +
     '<div class="judul">LAPORAN KINERJA BULANAN</div>' +
     '<div class="periode">Periode: Bulan ' + esc(d.periode.replace(' ', ' Tahun ')) + '</div>' +
