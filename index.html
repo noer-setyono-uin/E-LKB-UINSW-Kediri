@@ -223,6 +223,7 @@
               <div class="stat"><b id="statTotal">-</b><span>total kegiatan</span></div>
             </div>
 
+            <label class="check mt-3.5"><input type="checkbox" id="useTtd" checked> Sertakan tanda tangan digital (bila sudah diunggah di Profil)</label>
             <div class="flex flex-col sm:flex-row gap-2.5 mt-4">
               <button id="btnPreview" class="btn btn-primary sm:flex-1">👁️ Pratinjau Laporan</button>
               <button id="btnPrint" class="btn btn-outline sm:flex-1" disabled>🖨️ Cetak / Simpan PDF</button>
@@ -269,6 +270,39 @@
             <div id="pwStatus" class="status !mt-0"></div>
           </div>
 
+          <div class="card" id="ttdCard">
+            <h3 class="font-bold text-slate-900">Tanda Tangan Digital <span class="muted">(opsional)</span></h3>
+            <p class="muted mt-1">Unggah foto/scan tanda tangan (PNG atau JPG). Latar putih dibuang otomatis. Gambar dipasang di laporan di atas nama bila opsi "Sertakan tanda tangan digital" dicentang di menu Cetak.</p>
+            <div class="grid gap-4 sm:grid-cols-2 mt-3.5">
+              <div>
+                <div class="lbl">Tanda tangan saya</div>
+                <div style="min-height:80px;border:1px dashed #cbd5e1;border-radius:.75rem;display:flex;align-items:center;justify-content:center;padding:6px;background:#fff;">
+                  <img id="ttdUserImg" class="hidden" alt="Tanda tangan saya" style="max-height:72px;max-width:100%;">
+                  <span id="ttdUserEmpty" class="muted">Belum ada</span>
+                </div>
+                <div class="flex flex-wrap gap-2 mt-2.5">
+                  <label class="btn btn-outline btn-sm" for="ttdUserFile">Pilih gambar</label>
+                  <input type="file" id="ttdUserFile" accept="image/png,image/jpeg" class="hidden">
+                  <button id="btnDelTtdUser" class="btn btn-danger btn-sm hidden">Hapus</button>
+                </div>
+              </div>
+              <div>
+                <div class="lbl">Tanda tangan atasan langsung</div>
+                <div style="min-height:80px;border:1px dashed #cbd5e1;border-radius:.75rem;display:flex;align-items:center;justify-content:center;padding:6px;background:#fff;">
+                  <img id="ttdAtasanImg" class="hidden" alt="Tanda tangan atasan" style="max-height:72px;max-width:100%;">
+                  <span id="ttdAtasanEmpty" class="muted">Belum ada</span>
+                </div>
+                <div class="flex flex-wrap gap-2 mt-2.5">
+                  <label class="btn btn-outline btn-sm" for="ttdAtasanFile">Pilih gambar</label>
+                  <input type="file" id="ttdAtasanFile" accept="image/png,image/jpeg" class="hidden">
+                  <button id="btnDelTtdAtasan" class="btn btn-danger btn-sm hidden">Hapus</button>
+                </div>
+              </div>
+            </div>
+            <div id="ttdStatus" class="status"></div>
+            <p class="muted mt-2.5">Pastikan Anda berhak memakai tanda tangan atasan tersebut. Gambar disimpan di Google Drive pemilik sistem dan hanya dipakai untuk laporan Anda.</p>
+          </div>
+
           <div class="card" id="geminiCard">
             <h3 class="font-bold text-slate-900">API Key Gemini</h3>
             <p class="muted mt-1">Dipakai untuk memproses cerita menjadi baris laporan. Setiap dosen memakai key miliknya sendiri.</p>
@@ -312,8 +346,7 @@
   <!-- Area khusus cetak (hanya tampil saat window.print) -->
   <div id="printArea"></div>
 
-  <!-- <script src="vendor/sweetalert2.all.min.js"></script> -->
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="vendor/sweetalert2.all.min.js"></script>
   <script src="app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
