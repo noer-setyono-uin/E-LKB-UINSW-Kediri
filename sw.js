@@ -1,6 +1,6 @@
 // Service worker sederhana: cache "kerangka" aplikasi agar cepat dibuka.
 // Permintaan ke Apps Script (lintas domain, POST) TIDAK disentuh sama sekali.
-const CACHE = 'lkb-v5';
+const CACHE = 'lkb-v6';
 const ASSETS = ['./', 'index.html', 'app.js', 'styles.css', 'vendor/sweetalert2.all.min.js',
                 'manifest.json', 'icon-192.png', 'icon-512.png'];
 
