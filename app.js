@@ -4,8 +4,8 @@
 //  2) APP_API_TOKEN: isi hanya jika Script Property APP_API_TOKEN diisi di backend.
 //     (Nilai ini terlihat publik di file ini — ia hanya penghalang bot, bukan rahasia.)
 // =====================================================================
-const API_URL = 'GANTI_DENGAN_URL_WEB_APP_ANDA/exec';
-const APP_API_TOKEN = '';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyaDEVaDubJoFvqR4URUptcd11ipAN1dmmr7ObXO6XOg1sstbrToX5AppL9VA_m-LQ6/exec';
+const APP_API_TOKEN = 'noerpunya';
 
 const TOKEN_KEY = 'lkb_token';
 const AUTOSEND_KEY = 'lkb_autosend';
