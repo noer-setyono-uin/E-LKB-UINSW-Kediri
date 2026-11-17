@@ -4,8 +4,8 @@
 //  2) APP_API_TOKEN: isi hanya jika Script Property APP_API_TOKEN diisi di backend.
 //     (Nilai ini terlihat publik di file ini — ia hanya penghalang bot, bukan rahasia.)
 // =====================================================================
-const API_URL = 'https://script.google.com/macros/s/AKfycbyaDEVaDubJoFvqR4URUptcd11ipAN1dmmr7ObXO6XOg1sstbrToX5AppL9VA_m-LQ6/exec';
-const APP_API_TOKEN = 'noerpunya';
+const API_URL = 'GANTI_DENGAN_URL_WEB_APP_ANDA/exec';
+const APP_API_TOKEN = '';
 
 const TOKEN_KEY = 'lkb_token';
 const AUTOSEND_KEY = 'lkb_autosend';
@@ -622,19 +622,26 @@ function resetReportOutput() {
   setStatus('reportStatus', '');
 }
 
+/** <img> tanda tangan (hanya data URL PNG/JPG yang dibuat server). */
+function ttdImg(dataUrl) {
+  if (!dataUrl || !/^data:image\/(png|jpeg);base64,[A-Za-z0-9+\/=]+$/.test(dataUrl)) return '';
+  return '<img src="' + dataUrl + '" alt="Tanda tangan" style="height:58px;max-width:170px;object-fit:contain;">';
+}
+
 /** Susun HTML laporan dari data server (semua teks di-escape). */
 function buildReportHtml(d) {
   const p = d.profile;
   let body = '';
   d.rows.forEach(row => {
     if (row.jenis === 'libur') {
-      body += '<tr><td>' + esc(row.label) + '</td><td colspan="5" class="libur">' + esc(row.keterangan) + '</td></tr>';
+      body += '<tr><td style="text-align:right;vertical-align:middle;background:#fadbd8;font-style:italic;">' + esc(row.label) +
+        '</td><td colspan="5" class="libur" style="background:#fadbd8;font-style:italic;">' + esc(row.keterangan) + '</td></tr>';
     } else if (row.jenis === 'kosong') {
-      body += '<tr><td>' + esc(row.label) + '</td><td></td><td></td><td></td><td></td><td></td></tr>';
+      body += '<tr><td style="text-align:right;vertical-align:middle;">' + esc(row.label) + '</td><td></td><td></td><td></td><td></td><td></td></tr>';
     } else {
       row.entries.forEach((e, i) => {
         body += '<tr>' +
-          (i === 0 ? '<td rowspan="' + row.entries.length + '">' + esc(row.label) + '</td>' : '') +
+          (i === 0 ? '<td rowspan="' + row.entries.length + '" style="text-align:right;vertical-align:middle;">' + esc(row.label) + '</td>' : '') +
           '<td class="c">' + (i + 1) + '</td><td>' + esc(e.deskripsi) + '</td>' +
           '<td class="c">' + esc(e.judulLaporan) + '</td><td class="c">' + esc(e.jml) + '</td>' +
           '<td class="c">' + esc(e.satuan) + '</td></tr>';
@@ -663,7 +670,7 @@ function buildReportHtml(d) {
     '<th style="width:9%;">Satuan</th></tr></thead><tbody>' + body + '</tbody></table>' +
     '<p style="margin:14px 0 0;">Demikian laporan kinerja bulanan ini dibuat berdasarkan dengan yang sebenarnya.</p>' +
     '<table class="ttd"><tr><td>Mengetahui,<br>Atasan Langsung,</td><td>' + esc(d.tanggalCetak) + '<br>Yang membuat laporan,</td></tr>' +
-    '<tr><td class="space"></td><td class="space"></td></tr>' +
+    '<tr><td class="space">' + ttdImg(d.ttd && d.ttd.atasan) + '</td><td class="space">' + ttdImg(d.ttd && d.ttd.user) + '</td></tr>' +
     '<tr><td><b><u>' + esc(p.atasan || '') + '</u></b><br>NIP. ' + esc(p.nipAtasan || '') + '</td>' +
     '<td><b><u>' + esc(p.nama) + '</u></b><br>NIP. ' + esc(p.nip) + '</td></tr></table>' +
     '</div>';
@@ -676,7 +683,7 @@ async function previewReport() {
   resetReportOutput();
   showLoading('Menyusun pratinjau...');
   try {
-    const d = await api('getReportData', { month });
+    const d = await api('getReportData', { month, ttd: $('useTtd').checked });
     const html = buildReportHtml(d);
     lastReport = {
       html,
@@ -716,7 +723,7 @@ async function downloadPdf() {
   $('reportResult').classList.add('hidden');
   showLoading('Membuat PDF resmi...', 'Menyusun sheet laporan lalu mengekspornya, bisa sampai 30 detik.');
   try {
-    const res = await api('generateReport', { month });
+    const res = await api('generateReport', { month, ttd: $('useTtd').checked });
     const url = base64ToBlobUrl(res.base64);
     hideLoading();
 
@@ -738,6 +745,91 @@ async function downloadPdf() {
 }
 
 // ============================== MENU 4: PROFIL ==============================
+// ----- tanda tangan digital (opsional) -----
+/** Perkecil gambar (maks 480x200), hapus latar putih -> PNG transparan (data URL). */
+function fileToSignatureDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    if (!/^image\/(png|jpeg)$/.test(file.type)) return reject(new Error('Gunakan gambar PNG atau JPG.'));
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Gagal membaca file.'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Gambar tidak bisa dibuka.'));
+      img.onload = () => {
+        const k = Math.min(1, 480 / img.width, 200 / img.height);
+        const w = Math.max(1, Math.round(img.width * k)), h = Math.max(1, Math.round(img.height * k));
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const data = ctx.getImageData(0, 0, w, h);
+        const px = data.data;
+        for (let i = 0; i < px.length; i += 4) {
+          if (px[i] > 235 && px[i + 1] > 235 && px[i + 2] > 235) px[i + 3] = 0;   // latar putih -> transparan
+        }
+        ctx.putImageData(data, 0, 0);
+        resolve(c.toDataURL('image/png'));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+const TTD_IDS = { user: { img: 'ttdUserImg', empty: 'ttdUserEmpty', file: 'ttdUserFile', del: 'btnDelTtdUser' },
+                  atasan: { img: 'ttdAtasanImg', empty: 'ttdAtasanEmpty', file: 'ttdAtasanFile', del: 'btnDelTtdAtasan' } };
+
+function renderTtd(who, dataUrl) {
+  const ids = TTD_IDS[who];
+  const ok = !!dataUrl && /^data:image\/(png|jpeg);base64,/.test(dataUrl);
+  const img = $(ids.img);
+  if (ok) img.src = dataUrl; else img.removeAttribute('src');
+  img.classList.toggle('hidden', !ok);
+  $(ids.empty).classList.toggle('hidden', ok);
+  $(ids.del).classList.toggle('hidden', !ok);
+}
+
+async function loadSignatures() {
+  try {
+    const s = await api('getSignatures');
+    renderTtd('user', s.user);
+    renderTtd('atasan', s.atasan);
+  } catch (err) {
+    setStatus('ttdStatus', 'Gagal memuat tanda tangan: ' + err.message, 'error');
+  }
+}
+
+async function uploadSignature(who, inputEl) {
+  const file = inputEl.files && inputEl.files[0];
+  inputEl.value = '';
+  if (!file) return;
+  setStatus('ttdStatus', '');
+  showLoading('Mengunggah tanda tangan...');
+  try {
+    const dataUrl = await fileToSignatureDataUrl(file);
+    profile = await api('saveSignature', { who, dataUrl });
+    renderTtd(who, dataUrl);
+    hideLoading();
+    toast('Tanda tangan tersimpan');
+  } catch (err) {
+    hideLoading();
+    setStatus('ttdStatus', 'Gagal: ' + err.message, 'error');
+  }
+}
+
+async function deleteSignature(who) {
+  const ok = await confirmBox({ title: 'Hapus tanda tangan?', text: 'Laporan berikutnya akan dicetak tanpa gambar tanda tangan ini.',
+                                confirmText: 'Ya, hapus', danger: true });
+  if (!ok) return;
+  try {
+    profile = await api('removeSignature', { who });
+    renderTtd(who, '');
+    toast('Tanda tangan dihapus');
+  } catch (err) {
+    showError('Gagal menghapus tanda tangan', err);
+  }
+}
+
 function fillProfileForm() {
   $('pfNama').value = profile.nama || '';
   $('pfNip').value = profile.nip || '';
@@ -749,6 +841,8 @@ function fillProfileForm() {
   setStatus('profileStatus', '');
   setStatus('keyStatus', '');
   renderAiState();
+  setStatus('ttdStatus', '');
+  loadSignatures();
   $('fileLinkBox').innerHTML = profile.fileUrl
     ? 'Spreadsheet pribadi Anda: <a class="text-emerald-700 underline" href="' + esc(profile.fileUrl) + '" target="_blank" rel="noopener">buka di Google Sheets</a>'
     : '';
@@ -885,6 +979,10 @@ document.addEventListener('DOMContentLoaded', () => {
   $('btnChangePw').addEventListener('click', changePassword);
   $('btnSaveKey').addEventListener('click', saveGeminiKey);
   $('btnRemoveKey').addEventListener('click', removeGeminiKey);
+  $('ttdUserFile').addEventListener('change', e => uploadSignature('user', e.target));
+  $('ttdAtasanFile').addEventListener('change', e => uploadSignature('atasan', e.target));
+  $('btnDelTtdUser').addEventListener('click', () => deleteSignature('user'));
+  $('btnDelTtdAtasan').addEventListener('click', () => deleteSignature('atasan'));
 
   setupSpeech();
 
